@@ -36,7 +36,7 @@ int main(int argc, char** argv) {
 		std::cout << "Running on " << GetPlatformName(platform_id) << ", " << GetDeviceName(platform_id, device_id) << std::endl;
 
 		//create a queue to which we will push commands for the device
-		cl::CommandQueue queue(context);
+		cl::CommandQueue queue(context, CL_QUEUE_PROFILING_ENABLE);
 
 		//2.2 Load & build the device code
 		cl::Program::Sources sources;
@@ -45,6 +45,10 @@ int main(int argc, char** argv) {
 
 		cl::Program program(context, sources);
 
+		cl::Event prof_event;
+		cl::Event A_event;
+		cl::Event B_event;
+		cl::Event C_event;
 		//build and debug the kernel code
 		try {
 			program.build();
@@ -58,8 +62,8 @@ int main(int argc, char** argv) {
 
 		//Part 3 - memory allocation
 		//host - input
-		std::vector<int> A = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 }; //C++11 allows this type of initialisation
-		std::vector<int> B = { 0, 1, 2, 0, 1, 2, 0, 1, 2, 0 };
+		std::vector<int> A(10000000); //C++11 allows this type of initialisation
+		std::vector<int> B(10000000);
 
 		size_t vector_elements = A.size();//number of elements
 		size_t vector_size = A.size() * sizeof(int);//size in bytes
@@ -75,8 +79,8 @@ int main(int argc, char** argv) {
 		//Part 4 - device operations
 
 		//4.1 Copy arrays A and B to device memory
-		queue.enqueueWriteBuffer(buffer_A, CL_TRUE, 0, vector_size, &A[0]);
-		queue.enqueueWriteBuffer(buffer_B, CL_TRUE, 0, vector_size, &B[0]);
+		queue.enqueueWriteBuffer(buffer_A, CL_TRUE, 0, vector_size, &A[0], NULL, &A_event);
+		queue.enqueueWriteBuffer(buffer_B, CL_TRUE, 0, vector_size, &B[0], NULL, &B_event);
 
 		//4.2 Setup and execute the kernel (i.e. device code)
 		cl::Kernel kernel_add = cl::Kernel(program, "add");
@@ -84,14 +88,25 @@ int main(int argc, char** argv) {
 		kernel_add.setArg(1, buffer_B);
 		kernel_add.setArg(2, buffer_C);
 
-		queue.enqueueNDRangeKernel(kernel_add, cl::NullRange, cl::NDRange(vector_elements), cl::NullRange);
-
+		queue.enqueueNDRangeKernel(kernel_add, cl::NullRange, cl::NDRange(vector_elements), cl::NullRange, NULL, &prof_event);
 		//4.3 Copy the result from device to host
-		queue.enqueueReadBuffer(buffer_C, CL_TRUE, 0, vector_size, &C[0]);
+		queue.enqueueReadBuffer(buffer_C, CL_TRUE, 0, vector_size, &C[0], NULL, &C_event);
 
-		std::cout << "A = " << A << std::endl;
-		std::cout << "B = " << B << std::endl;
-		std::cout << "C = " << C << std::endl;
+		std::cout << "Kernel execution time [ns]:" <<
+			prof_event.getProfilingInfo<CL_PROFILING_COMMAND_END>() -
+			prof_event.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
+		std::cout << "A Transfer time [ns]:" <<
+			A_event.getProfilingInfo<CL_PROFILING_COMMAND_END>() -
+			A_event.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
+		std::cout << "B Transfer time [ns]:" <<
+			B_event.getProfilingInfo<CL_PROFILING_COMMAND_END>() -
+			B_event.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
+		std::cout << "C Transfer time [ns]:" <<
+			C_event.getProfilingInfo<CL_PROFILING_COMMAND_END>() -
+			C_event.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
+	//	std::cout << "A = " << A << std::endl;
+	//	std::cout << "B = " << B << std::endl;
+	//	std::cout << "C = " << C << std::endl;
 	}
 	catch (cl::Error err) {
 		std::cerr << "ERROR: " << err.what() << ", " << getErrorString(err.err()) << std::endl;
