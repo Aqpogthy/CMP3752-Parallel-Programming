@@ -62,12 +62,13 @@ int main(int argc, char** argv) {
 
 		//Part 3 - memory allocation
 		//host - input
-		std::vector<int> A(10000000); //C++11 allows this type of initialisation
-		std::vector<int> B(10000000);
+		std::vector<int> A(128); //C++11 allows this type of initialisation
+		std::vector<int> B(128);
 
 		size_t vector_elements = A.size();//number of elements
 		size_t vector_size = A.size() * sizeof(int);//size in bytes
-
+		
+		
 		//host - output
 		std::vector<int> C(vector_elements);
 
@@ -88,11 +89,16 @@ int main(int argc, char** argv) {
 		kernel_add.setArg(1, buffer_B);
 		kernel_add.setArg(2, buffer_C);
 
-		queue.enqueueNDRangeKernel(kernel_add, cl::NullRange, cl::NDRange(vector_elements), cl::NullRange, NULL, &prof_event);
+		cl::Device device = context.getInfo<CL_CONTEXT_DEVICES>()[0]; // get device
+		cerr << kernel_add.getWorkGroupInfo<CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE>
+			(device) << endl; // get info
+		size_t local_size = kernel_add.getWorkGroupInfo<CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE>(device);
+		
+		queue.enqueueNDRangeKernel(kernel_add, cl::NullRange, cl::NDRange(vector_elements), cl::NDRange(local_size));
 		//4.3 Copy the result from device to host
 		queue.enqueueReadBuffer(buffer_C, CL_TRUE, 0, vector_size, &C[0], NULL, &C_event);
 
-		std::cout << "Kernel execution time [ns]:" <<
+		/*std::cout << "Kernel execution time [ns]:" <<
 			prof_event.getProfilingInfo<CL_PROFILING_COMMAND_END>() -
 			prof_event.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
 		std::cout << "A Transfer time [ns]:" <<
@@ -103,7 +109,7 @@ int main(int argc, char** argv) {
 			B_event.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
 		std::cout << "C Transfer time [ns]:" <<
 			C_event.getProfilingInfo<CL_PROFILING_COMMAND_END>() -
-			C_event.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
+			C_event.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;*/
 	//	std::cout << "A = " << A << std::endl;
 	//	std::cout << "B = " << B << std::endl;
 	//	std::cout << "C = " << C << std::endl;
