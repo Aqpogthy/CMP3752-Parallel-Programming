@@ -1,4 +1,4 @@
-//a simple OpenCL kernel which copies all pixels from A to B
+﻿//a simple OpenCL kernel which copies all pixels from A to B
 kernel void identity(global const uchar* A, global uchar* B) {
 	int id = get_global_id(0);
 	B[id] = A[id];
@@ -20,17 +20,63 @@ kernel void filter_r(global const uchar* A, global uchar* B) {
 }
 kernel void invert(global const uchar* A, global uchar* B) {
 	int id = get_global_id(0);
+	B[id] = 255 - A[id];
+}
+//        ░░         ░ ░    ░░░░░░ ░       ░░░░          ░░░      
+//        ▒█ ░      ░░█░░  ░█░░ ▒███░░ ░   ██            ░█       
+//        █░          ░██ ░ ██ ░   ░▒█▒░  ▓█              █       
+//       ░█             ░█░ ░█▒    ░ ░ ██▒█               █       
+//       ░█              ░██████░       ░█▒░         ░    █       
+//       ░█             ░██▒░░            ░               █       
+//       ░█              ░▒▒▒▓░ ░                         █       
+//       ░█                                               █░      
+//       ░█                                              ▒█       
+//        █                                             ░█        
+//       ░██         ░░░░░  ░     ░░  ░▒▒█████████      ██        
+//         █░░   ░██░ ░██████        ░██████   █▒     ░██         
+//          █░░  ░█░  ░██████░        ██████   ░█  ░░██▓░░░       
+//    ░██████▓▒░ █▒   ░██████        ░██████░   █  ░░  ░ ▒█░      
+//     ░█▓    ░  █     █████▒         █████▒    █ ░    ░█▒ ░      
+//      ░░█▓     ▓█   ░░███░  ░░      ░░░░    ░ █ ░ ░░██          
+//          █▒░▒█▓         ░   ░░          ░░▒█░▓█░  ▓█           
+//         ██ ░░▓██▓░      ░          ▒░    ░░██▒░░░  ░█          
+//        ▒█               ▒▓░▒█▒▓████▒░      ░░░ ░░   ░█░        
+//        █▒ ░░▒█░░       ░   ░              ░ ░██▒▒▒████▒        
+//             ░░ ███▒░░░             ░ ░ ▒████░                  
+//                   ████████            ░ ▒                      
+//                  ░░█                    ░█░                    
+//                     ▒██                  ░█                    
+//                    ░▓█░                   ▒█                   
+//                    █▒░░░░                 ░▒█                  
+//                      ░█▓                  ░░█░                 
+//                      ▒█                     ▓█                 
+//                      █░                     ░█░                
+//							 Vesper's Work
+kernel void rgb2grey(global const uchar* A, global uchar* B) {  
+	int id = get_global_id(0);
 	int image_size = get_global_size(0) / 3; //each image consists of 3 colour channels
 	int colour_channel = id / image_size; // 0 - red, 1 - green, 2 - blue
-	//this is just a copy operation, modify to filter out the individual colour channels
 
+	int red = 255;
+	int green = 255;
+	int blue = 255;
 
-	B[id] = 255 - A[id];
-
-
-}
-kernel void rgb2grey(global const uchar* A, global uchar* B) {
-
+	if(colour_channel == 0){
+		red  = A[id];
+		green = A[id + image_size];
+		blue = A[id + image_size + image_size];	
+	}
+	if(colour_channel == 1){
+		red  = A[id - image_size];
+		green = A[id];
+		blue = A[id + image_size];
+	}
+	if(colour_channel == 2){
+		red  = A[id- image_size- image_size];
+		green = A[id - image_size];
+		blue = A[id];		
+	}			
+		B[id] = red * 0.2126 + green*0.7152 + blue*0.0722;
 }
 
 //simple ND identity kernel

@@ -84,10 +84,9 @@ int main(int argc, char** argv) {
 		queue.enqueueWriteBuffer(buffer_B, CL_TRUE, 0, vector_size, &B[0], NULL, &B_event);
 
 		//4.2 Setup and execute the kernel (i.e. device code)
-		cl::Kernel kernel_add = cl::Kernel(program, "add");
+		cl::Kernel kernel_add = cl::Kernel(program, "avg_filter");
 		kernel_add.setArg(0, buffer_A);
 		kernel_add.setArg(1, buffer_B);
-		kernel_add.setArg(2, buffer_C);
 
 		cl::Device device = context.getInfo<CL_CONTEXT_DEVICES>()[0]; // get device
 		cerr << kernel_add.getWorkGroupInfo<CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE>
@@ -98,21 +97,21 @@ int main(int argc, char** argv) {
 		//4.3 Copy the result from device to host
 		queue.enqueueReadBuffer(buffer_C, CL_TRUE, 0, vector_size, &C[0], NULL, &C_event);
 
-		/*std::cout << "Kernel execution time [ns]:" <<
-			prof_event.getProfilingInfo<CL_PROFILING_COMMAND_END>() -
-			prof_event.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
-		std::cout << "A Transfer time [ns]:" <<
-			A_event.getProfilingInfo<CL_PROFILING_COMMAND_END>() -
-			A_event.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
-		std::cout << "B Transfer time [ns]:" <<
-			B_event.getProfilingInfo<CL_PROFILING_COMMAND_END>() -
-			B_event.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
-		std::cout << "C Transfer time [ns]:" <<
-			C_event.getProfilingInfo<CL_PROFILING_COMMAND_END>() -
-			C_event.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;*/
-	//	std::cout << "A = " << A << std::endl;
-	//	std::cout << "B = " << B << std::endl;
-	//	std::cout << "C = " << C << std::endl;
+		///*std::cout << "Kernel execution time [ns]:" <<
+		//	prof_event.getProfilingInfo<CL_PROFILING_COMMAND_END>() -
+		//	prof_event.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
+		//std::cout << "A Transfer time [ns]:" <<
+		//	A_event.getProfilingInfo<CL_PROFILING_COMMAND_END>() -
+		//	A_event.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
+		//std::cout << "B Transfer time [ns]:" <<
+		//	B_event.getProfilingInfo<CL_PROFILING_COMMAND_END>() -
+		//	B_event.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
+		//std::cout << "C Transfer time [ns]:" <<
+		//	C_event.getProfilingInfo<CL_PROFILING_COMMAND_END>() -
+		//	C_event.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;*/
+		//std::cout << "A = " << A << std::endl;
+		//std::cout << "B = " << B << std::endl;
+		//std::cout << "C = " << C << std::endl;
 	}
 	catch (cl::Error err) {
 		std::cerr << "ERROR: " << err.what() << ", " << getErrorString(err.err()) << std::endl;
