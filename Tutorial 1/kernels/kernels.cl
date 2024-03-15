@@ -12,7 +12,15 @@ kernel void add(global const int* A, global const int* B, global int* C) {
 //a simple smoothing kernel averaging values in a local window (radius 1)
 kernel void avg_filter(global const int* A, global int* B) {
 	int id = get_global_id(0);
-	B[id] = (A[id-2] + A[id - 1] + A[id] + A[id + 1] + A[id + 2])/5;
+	int arr[5] = { A[id - 2], A[id - 1], A[id], A[id + 1], A[id + 2] };
+	int total = 0;
+	for (int i = 0; i < 4; i++) {
+		if (arr[i] != NULL) {
+			total += arr[i];
+		}
+	}
+	B[id] = (total)/5;
+	
 }
 
 //a simple 2D kernel

@@ -62,8 +62,8 @@ int main(int argc, char** argv) {
 
 		//Part 3 - memory allocation
 		//host - input
-		std::vector<int> A(128); //C++11 allows this type of initialisation
-		std::vector<int> B(128);
+		std::vector<int> A = {1, 2, 3, 6, 2, 7, 3,9,3,5}; //C++11 allows this type of initialisation
+		std::vector<int> B = {4, 6, 2, 8, 5, 3, 6,7,3,6};
 
 		size_t vector_elements = A.size();//number of elements
 		size_t vector_size = A.size() * sizeof(int);//size in bytes
@@ -80,22 +80,24 @@ int main(int argc, char** argv) {
 		//Part 4 - device operations
 
 		//4.1 Copy arrays A and B to device memory
-		queue.enqueueWriteBuffer(buffer_A, CL_TRUE, 0, vector_size, &A[0], NULL, &A_event);
-		queue.enqueueWriteBuffer(buffer_B, CL_TRUE, 0, vector_size, &B[0], NULL, &B_event);
+		queue.enqueueWriteBuffer(buffer_A, CL_TRUE, 0, vector_size, &A[0]);
+		queue.enqueueWriteBuffer(buffer_B, CL_TRUE, 0, vector_size, &B[0]);
 
 		//4.2 Setup and execute the kernel (i.e. device code)
-		cl::Kernel kernel_add = cl::Kernel(program, "avg_filter");
+		cl::Kernel kernel_add = cl::Kernel(program, "add2D");
 		kernel_add.setArg(0, buffer_A);
 		kernel_add.setArg(1, buffer_B);
+		kernel_add.setArg(2, buffer_C);
 
-		cl::Device device = context.getInfo<CL_CONTEXT_DEVICES>()[0]; // get device
-		cerr << kernel_add.getWorkGroupInfo<CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE>
-			(device) << endl; // get info
-		size_t local_size = kernel_add.getWorkGroupInfo<CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE>(device);
+		//cl::Device device = context.getInfo<CL_CONTEXT_DEVICES>()[0]; // get device
+		//cerr << kernel_add.getWorkGroupInfo<CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE>
+		//	(device) << endl; // get info
+		//size_t local_size = kernel_add.getWorkGroupInfo<CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE>(device);
 		
-		queue.enqueueNDRangeKernel(kernel_add, cl::NullRange, cl::NDRange(vector_elements), cl::NDRange(local_size));
+		queue.enqueueNDRangeKernel(kernel_add, cl::NullRange, cl::NDRange(5, 2),
+			cl::NullRange);
 		//4.3 Copy the result from device to host
-		queue.enqueueReadBuffer(buffer_C, CL_TRUE, 0, vector_size, &C[0], NULL, &C_event);
+		queue.enqueueReadBuffer(buffer_C, CL_TRUE, 0, vector_size, &C[0]);
 
 		///*std::cout << "Kernel execution time [ns]:" <<
 		//	prof_event.getProfilingInfo<CL_PROFILING_COMMAND_END>() -
@@ -109,9 +111,9 @@ int main(int argc, char** argv) {
 		//std::cout << "C Transfer time [ns]:" <<
 		//	C_event.getProfilingInfo<CL_PROFILING_COMMAND_END>() -
 		//	C_event.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;*/
-		//std::cout << "A = " << A << std::endl;
-		//std::cout << "B = " << B << std::endl;
-		//std::cout << "C = " << C << std::endl;
+		std::cout << "A = " << A << std::endl;
+		std::cout << "B = " << B << std::endl;
+		std::cout << "C = " << C << std::endl;
 	}
 	catch (cl::Error err) {
 		std::cerr << "ERROR: " << err.what() << ", " << getErrorString(err.err()) << std::endl;

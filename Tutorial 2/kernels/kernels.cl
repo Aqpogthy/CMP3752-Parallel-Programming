@@ -111,14 +111,14 @@ kernel void avg_filterND(global const uchar* A, global uchar* B) {
 	uint result = 0;
 
 	//simple boundary handling - just copy the original pixel
-	if ((x == 0) || (x == width-1) || (y == 0) || (y == height-1)) {
+	if ((x == 0) || (x == width-2) || (y == 0) || (y == height-2)) {
 		result = A[id];	
 	} else {
-		for (int i = (x-1); i <= (x+1); i++)
-		for (int j = (y-1); j <= (y+1); j++) 
+		for (int i = (x-2); i <= (x+2); i++)
+		for (int j = (y-2); j <= (y+2); j++) 
 			result += A[i + j*width + c*image_size];
 
-		result /= 9;
+		result /= 25;
 	}
 
 	B[id] = (uchar)result;
