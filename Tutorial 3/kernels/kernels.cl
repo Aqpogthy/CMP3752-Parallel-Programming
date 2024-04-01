@@ -6,26 +6,26 @@ kernel void reduce_add_1(global const int* A, global int* B) {
 	B[id] = A[id]; //copy input to output
 
 	barrier(CLK_GLOBAL_MEM_FENCE); //wait for all threads to finish copying
-	 
+
 	//perform reduce on the output array
 	//modulo operator is used to skip a set of values (e.g. 2 in the next line)
 	//we also check if the added element is within bounds (i.e. < N)
-	if (((id % 2) == 0) && ((id + 1) < N)) 
+	if (((id % 2) == 0) && ((id + 1) < N))
 		B[id] += B[id + 1];
 
 	barrier(CLK_GLOBAL_MEM_FENCE);
 
-	if (((id % 4) == 0) && ((id + 2) < N)) 
+	if (((id % 4) == 0) && ((id + 2) < N))
 		B[id] += B[id + 2];
 
 	barrier(CLK_GLOBAL_MEM_FENCE);
 
-	if (((id % 8) == 0) && ((id + 4) < N)) 
+	if (((id % 8) == 0) && ((id + 4) < N))
 		B[id] += B[id + 4];
 
 	barrier(CLK_GLOBAL_MEM_FENCE);
 
-	if (((id % 16) == 0) && ((id + 8) < N)) 
+	if (((id % 16) == 0) && ((id + 8) < N))
 		B[id] += B[id + 8];
 }
 
@@ -39,7 +39,7 @@ kernel void reduce_add_2(global const int* A, global int* B) {
 	barrier(CLK_GLOBAL_MEM_FENCE);
 
 	for (int i = 1; i < N; i *= 2) { //i is a stride
-		if (!(id % (i * 2)) && ((id + i) < N)) 
+		if (!(id % (i * 2)) && ((id + i) < N))
 			B[id] += B[id + i];
 
 		barrier(CLK_GLOBAL_MEM_FENCE);
@@ -58,7 +58,7 @@ kernel void reduce_add_3(global const int* A, global int* B, local int* scratch)
 	barrier(CLK_LOCAL_MEM_FENCE);//wait for all local threads to finish copying from global to local memory
 
 	for (int i = 1; i < N; i *= 2) {
-		if (!(lid % (i * 2)) && ((lid + i) < N)) 
+		if (!(lid % (i * 2)) && ((lid + i) < N))
 			scratch[lid] += scratch[lid + i];
 
 		barrier(CLK_LOCAL_MEM_FENCE);
@@ -81,7 +81,7 @@ kernel void reduce_add_4(global const int* A, global int* B, local int* scratch)
 	barrier(CLK_LOCAL_MEM_FENCE);//wait for all local threads to finish copying from global to local memory
 
 	for (int i = 1; i < N; i *= 2) {
-		if (!(lid % (i * 2)) && ((lid + i) < N)) 
+		if (!(lid % (i * 2)) && ((lid + i) < N))
 			scratch[lid] += scratch[lid + i];
 
 		barrier(CLK_LOCAL_MEM_FENCE);
@@ -91,18 +91,25 @@ kernel void reduce_add_4(global const int* A, global int* B, local int* scratch)
 	//serial operation! but works for any group size
 	//copy the cache to output array
 	if (!lid) {
-		atomic_add(&B[0],scratch[lid]);
+		atomic_add(&B[0], scratch[lid]);
 	}
 }
 
 //a very simple histogram implementation
-kernel void hist_simple(global const int* A, global int* H) { 
+kernel void hist_simple(global const int* A, global int* H, global int* nr_bins) {
 	int id = get_global_id(0);
+	int gs = get_global_size(0);
 
 	//assumes that H has been initialised to 0
 	int bin_index = A[id];//take value as a bin index
 
-	atomic_inc(&H[bin_index]);//serial operation, not very efficient!
+	if (A[id] > (nr_bins - 1)) {
+		atomic_inc(&H[gs]);
+	}
+	else {
+		atomic_inc(&H[bin_index]);
+	}
+
 }
 
 //Hillis-Steele basic inclusive scan
@@ -129,7 +136,7 @@ kernel void scan_add(__global const int* A, global int* B, local int* scratch_1,
 	int id = get_global_id(0);
 	int lid = get_local_id(0);
 	int N = get_local_size(0);
-	local int *scratch_3;//used for buffer swap
+	local int* scratch_3;//used for buffer swap
 
 	//cache all N values from global memory to local memory
 	scratch_1[lid] = A[id];
@@ -162,7 +169,7 @@ kernel void scan_bl(global int* A) {
 
 	//up-sweep
 	for (int stride = 1; stride < N; stride *= 2) {
-		if (((id + 1) % (stride*2)) == 0)
+		if (((id + 1) % (stride * 2)) == 0)
 			A[id] += A[id - stride];
 
 		barrier(CLK_GLOBAL_MEM_FENCE); //sync the step
@@ -170,12 +177,12 @@ kernel void scan_bl(global int* A) {
 
 	//down-sweep
 	if (id == 0)
-		A[N-1] = 0;//exclusive scan
+		A[N - 1] = 0;//exclusive scan
 
 	barrier(CLK_GLOBAL_MEM_FENCE); //sync the step
 
-	for (int stride = N/2; stride > 0; stride /= 2) {
-		if (((id + 1) % (stride*2)) == 0) {
+	for (int stride = N / 2; stride > 0; stride /= 2) {
+		if (((id + 1) % (stride * 2)) == 0) {
 			t = A[id];
 			A[id] += A[id - stride]; //reduce 
 			A[id - stride] = t;		 //move
@@ -188,14 +195,14 @@ kernel void scan_bl(global int* A) {
 //calculates the block sums
 kernel void block_sum(global const int* A, global int* B, int local_size) {
 	int id = get_global_id(0);
-	B[id] = A[(id+1)*local_size-1];
+	B[id] = A[(id + 1) * local_size - 1];
 }
 
 //simple exclusive serial scan based on atomic operations - sufficient for small number of elements
 kernel void scan_add_atomic(global int* A, global int* B) {
 	int id = get_global_id(0);
 	int N = get_global_size(0);
-	for (int i = id+1; i < N && id < N; i++)
+	for (int i = id + 1; i < N && id < N; i++)
 		atomic_add(&B[i], A[id]);
 }
 

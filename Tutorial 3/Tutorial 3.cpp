@@ -39,7 +39,7 @@ int main(int argc, char** argv) {
 		//2.2 Load & build the device code
 		cl::Program::Sources sources;
 
-		AddSources(sources, "kernels.cl");
+		AddSources(sources, "kernels/my_kernels.cl");
 
 		cl::Program program(context, sources);
 
@@ -58,7 +58,8 @@ int main(int argc, char** argv) {
 
 		//Part 3 - memory allocation
 		//host - input
-		std::vector<mytype> A = {2,5,7,8,3,6,8,2,9,1};//allocate 10 elements with an initial value 1 - their sum is 10 so it should be easy to check the results!
+		std::vector<mytype> A = { 3, 4, 6, 8, 4, 2, 4, 9, 3, 9 };//allocate 10 elements with an initial value 1 - their sum is 10 so it should be easy to check the results!
+		int nr_bins = 6;
 
 		//the following part adjusts the length of the input vector so it can be run for a specific workgroup size
 		//if the total input length is divisible by the workgroup size
@@ -81,26 +82,31 @@ int main(int argc, char** argv) {
 		size_t nr_groups = input_elements / local_size;
 
 		//host - output
-		std::vector<mytype> B(input_elements);
-		size_t output_size = 10;//number of bins //1;//for reduce_add_4 (only need 1 output) //B.size() * sizeof(mytype);		size in bytes
+		std::vector<mytype> B(nr_bins);
+		size_t output_size = B.size() * sizeof(mytype);//size in bytes
 
 		//device - buffers
 		cl::Buffer buffer_A(context, CL_MEM_READ_ONLY, input_size);
 		cl::Buffer buffer_B(context, CL_MEM_READ_WRITE, output_size);
+		//cl::Buffer buffer_bins(context, CL_MEM_READ_ONLY, sizeof(int));
 
 		//Part 4 - device operations
 
 		//4.1 copy array A to and initialise other arrays on device memory
 		queue.enqueueWriteBuffer(buffer_A, CL_TRUE, 0, input_size, &A[0]);
 		queue.enqueueFillBuffer(buffer_B, 0, 0, output_size);//zero B buffer on device memory
+		//queue.enqueueWriteBuffer(buffer_bins, CL_TRUE, 0, sizeof(int), &nr_bins);
 
 		//4.2 Setup and execute all kernels (i.e. device code)
-		cl::Kernel kernel_1 = cl::Kernel(program, "hist_simple");
+		cl::Kernel kernel_1 = cl::Kernel(program, "scan_add");
 		kernel_1.setArg(0, buffer_A);
 		kernel_1.setArg(1, buffer_B);
-		kernel_1.setArg(2, cl::Local(local_size));//local memory size
+		//kernel_1.setArg(2, buffer_bins);
+		kernel_1.setArg(2, cl::Local(local_size * sizeof(mytype)));//local memory size
+		kernel_1.setArg(3, cl::Local(local_size * sizeof(mytype)));//local memory size
 
-				//call all kernels in a sequence
+
+		//call all kernels in a sequence
 		queue.enqueueNDRangeKernel(kernel_1, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(local_size));
 
 		//4.3 Copy the result from device to host
