@@ -83,6 +83,7 @@ int main(int argc, char** argv) {
 
 		std::vector<mytype> B(256);
 		size_t output_size = nr_bins * image_input.size();
+		//cout << output_size << endl;
 		cl::Buffer Histogram(context, CL_MEM_READ_WRITE, output_size);
 
 				//4.1 Copy images to device memory
@@ -99,11 +100,12 @@ int main(int argc, char** argv) {
 		
 		//queue.enqueueNDRangeKernel(kernel, cl::NullRange, cl::NDRange(image_input.width(), image_input.height(), image_input.spectrum()), cl::NullRange);
 		queue.enqueueNDRangeKernel(kernel, cl::NullRange, cl::NDRange(image_input.size()), cl::NullRange);
-
+		std::cout << "hello" << endl;
 		//vector<unsigned char> output_buffer(image_input.size());
 		////4.3 Copy the result from device to host
 		////queue.enqueueReadBuffer(dev_image_output, CL_TRUE, 0, output_buffer.size(), &output_buffer.data()[0]);
 		queue.enqueueReadBuffer(Histogram, CL_TRUE, 0, output_size, &B[0]);
+		std::cout << "hello" << endl;
 		std::cout << "B = " << B << std::endl;
 		std::cout << "hello" << endl;
 		//CImg<unsigned char> output_image(output_buffer.data(), image_input.width(), image_input.height(), image_input.depth(), image_input.spectrum());

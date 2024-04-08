@@ -155,8 +155,9 @@ kernel void convolutionND(global const uchar* A, global uchar* B, constant float
 kernel void intensityHistogram(global const uchar* A, global int* H) {
 
 	int id = get_global_id(0);
+	int bin_index = A[id];
 	/*int temp = A[id];
 	printf("%d\n", temp);*/
-	atomic_inc(&H[A[id]]);//increments histogram bin
+	atomic_inc(&H[bin_index]);//increments histogram bin
 
 }
