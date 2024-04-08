@@ -161,3 +161,12 @@ kernel void intensityHistogram(global const uchar* A, global int* H) {
 	atomic_inc(&H[bin_index]);//increments histogram bin
 
 }
+kernel void cumulativeHistogram(global const int* H, global int* CH) {
+	int id = get_global_id(0);
+	
+	int CF = 0;
+	for (int i = 0; i <= id; i++) {
+		CF += H[i];
+	}
+	CH[id] = CF;
+}

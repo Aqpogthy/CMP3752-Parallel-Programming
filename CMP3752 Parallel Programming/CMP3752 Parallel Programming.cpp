@@ -110,7 +110,6 @@ int main(int argc, char** argv) {
 		std::cout << "hello" << endl;
 		//CImg<unsigned char> output_image(output_buffer.data(), image_input.width(), image_input.height(), image_input.depth(), image_input.spectrum());
 		//CImgDisplay disp_output(output_image, "output");
-
 		//while (!disp_input.is_closed() && !disp_output.is_closed()
 		//	&& !disp_input.is_keyESC() && !disp_output.is_keyESC()) {
 		//	disp_input.wait(1);
