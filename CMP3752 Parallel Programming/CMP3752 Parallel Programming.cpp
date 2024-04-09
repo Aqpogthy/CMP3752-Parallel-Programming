@@ -70,51 +70,80 @@ int main(int argc, char** argv) {
 			throw err;
 		}
 
+
 		//Part 4 - device operations
 
 		//device - buffers
-		cl::Buffer dev_image_input(context, CL_MEM_READ_ONLY, image_input.size());
-		//cl::Buffer dev_image_output(context, CL_MEM_READ_WRITE, image_input.size()); //should be the same as input image
-		//cl::Buffer dev_convolution_mask(context, CL_MEM_READ_ONLY, convolution_mask.size()*sizeof(float));
-		
 		typedef int mytype;
 
-		int nr_bins = 256;
+		float nr_bins = 256;
 
 		std::vector<mytype> B(256);
-		size_t output_size = nr_bins * sizeof(mytype);
-		//cout << output_size << endl;
-		cl::Buffer Histogram(context, CL_MEM_READ_WRITE, output_size);
+		size_t histogram_size = nr_bins * sizeof(mytype);
+
+		cl::Buffer Histogram(context, CL_MEM_READ_WRITE, histogram_size);
+
+		cl::Buffer CumulativeHistogram(context, CL_MEM_READ_WRITE, histogram_size);
+
+		cl::Buffer dev_image_input(context, CL_MEM_READ_ONLY, image_input.size());
+
+		cl::Buffer NormalisedHistogram(context, CL_MEM_READ_WRITE, histogram_size);
+		
+		cl::Buffer dev_image_output(context, CL_MEM_READ_WRITE, image_input.size()); //should be the same as input image
+		
+		float SF = nr_bins / image_input.size();
+
+		cl::Buffer ScaleFactor(context, CL_MEM_READ_ONLY, sizeof(float));
 
 				//4.1 Copy images to device memory
 		queue.enqueueWriteBuffer(dev_image_input, CL_TRUE, 0, image_input.size(), &image_input.data()[0]);
-		queue.enqueueFillBuffer(Histogram, 0, 0, output_size);
-		//queue.enqueueWriteBuffer(dev_convolution_mask, CL_TRUE, 0, convolution_mask.size()*sizeof(float), &convolution_mask[0]);
+		queue.enqueueFillBuffer(Histogram, 0, 0, histogram_size);
+		queue.enqueueFillBuffer(CumulativeHistogram, 0, 0, histogram_size);
+		queue.enqueueFillBuffer(NormalisedHistogram, 0, 0, histogram_size);
+		queue.enqueueWriteBuffer(ScaleFactor, CL_TRUE, 0, sizeof(float), &SF);
+
 
 				//4.2 Setup and execute the kernel (i.e. device code)
-		cl::Kernel kernel = cl::Kernel(program, "intensityHistogram");
-		kernel.setArg(0, dev_image_input);
-		kernel.setArg(1, Histogram);
+		cl::Kernel HistogramKernel = cl::Kernel(program, "intensityHistogram");
+		HistogramKernel.setArg(0, dev_image_input);
+		HistogramKernel.setArg(1, Histogram);
+
+		cl::Kernel CumulativeHistogramKernel = cl::Kernel(program, "cumulativeHistogram");
+		CumulativeHistogramKernel.setArg(0, Histogram);
+		CumulativeHistogramKernel.setArg(1, CumulativeHistogram);
+
+		cl::Kernel NormaliseKernel = cl::Kernel(program, "NormaliseAndScale");
+		NormaliseKernel.setArg(0, CumulativeHistogram);
+		NormaliseKernel.setArg(1, NormalisedHistogram);
+		NormaliseKernel.setArg(2, SF);
+		
+		cl::Kernel BackProjectionKernel = cl::Kernel(program, "backProjection");
+		BackProjectionKernel.setArg(0, dev_image_input);
+		BackProjectionKernel.setArg(1, NormalisedHistogram);
+		BackProjectionKernel.setArg(2, dev_image_output);
+		//Normalise.setArg(3, nr_bins);
 		//kernel.setArg(1, dev_image_output);
 		//kernel.setArg(2, dev_convolution_mask);
 		
 		//queue.enqueueNDRangeKernel(kernel, cl::NullRange, cl::NDRange(image_input.width(), image_input.height(), image_input.spectrum()), cl::NullRange);
-		queue.enqueueNDRangeKernel(kernel, cl::NullRange, cl::NDRange(image_input.size()), cl::NullRange);
+		queue.enqueueNDRangeKernel(HistogramKernel, cl::NullRange, cl::NDRange(image_input.size()), cl::NullRange);
+		queue.enqueueNDRangeKernel(CumulativeHistogramKernel, cl::NullRange, cl::NDRange(histogram_size), cl::NullRange);
+		queue.enqueueNDRangeKernel(NormaliseKernel, cl::NullRange, cl::NDRange(histogram_size), cl::NullRange);
+		queue.enqueueNDRangeKernel(BackProjectionKernel, cl::NullRange, cl::NDRange(image_input.size()), cl::NullRange);
 		std::cout << "hello" << endl;
 		//vector<unsigned char> output_buffer(image_input.size());
 		////4.3 Copy the result from device to host
-		////queue.enqueueReadBuffer(dev_image_output, CL_TRUE, 0, output_buffer.size(), &output_buffer.data()[0]);
-		queue.enqueueReadBuffer(Histogram, CL_TRUE, 0, output_size, &B[0]);
+		queue.enqueueReadBuffer(dev_image_output, CL_TRUE, 0, image_input.size(), &output_buffer.data()[0]);
 		std::cout << "hello" << endl;
-		std::cout << "B = " << B << std::endl;
+		//std::cout << "B = " << B << std::endl;
 		std::cout << "hello" << endl;
-		//CImg<unsigned char> output_image(output_buffer.data(), image_input.width(), image_input.height(), image_input.depth(), image_input.spectrum());
-		//CImgDisplay disp_output(output_image, "output");
-		//while (!disp_input.is_closed() && !disp_output.is_closed()
-		//	&& !disp_input.is_keyESC() && !disp_output.is_keyESC()) {
-		//	disp_input.wait(1);
-		//	disp_output.wait(1);
-		//}
+		CImg<unsigned char> output_image(output_buffer.data(), image_input.width(), image_input.height(), image_input.depth(), image_input.spectrum());
+		CImgDisplay disp_output(output_image, "output");
+		while (!disp_input.is_closed() && !disp_output.is_closed()
+			&& !disp_input.is_keyESC() && !disp_output.is_keyESC()) {
+			disp_input.wait(1);
+			disp_output.wait(1);
+		}
 
 	}
 	catch (const cl::Error& err) {

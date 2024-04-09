@@ -170,3 +170,12 @@ kernel void cumulativeHistogram(global const int* H, global int* CH) {
 	}
 	CH[id] = CF;
 }
+kernel void NormaliseAndScale(global const int* CH, global int* NH, const float SF) {
+	int id = get_global_id(0);
+
+	NH[id] = CH[id] * SF;
+}
+kernel void backProjection(global const uchar* A, global const int* NH, global uchar* B) {
+	int id = get_global_id(0);
+	B[id] = NH[A[id]];
+}
