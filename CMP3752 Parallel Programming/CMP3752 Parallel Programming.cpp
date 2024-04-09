@@ -82,7 +82,7 @@ int main(int argc, char** argv) {
 		int nr_bins = 256;
 
 		std::vector<mytype> B(256);
-		size_t output_size = nr_bins * image_input.size();
+		size_t output_size = nr_bins * sizeof(mytype);
 		//cout << output_size << endl;
 		cl::Buffer Histogram(context, CL_MEM_READ_WRITE, output_size);
 
