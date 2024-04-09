@@ -148,12 +148,8 @@
     </CopyFileToFolders>
   </ItemGroup>
   <ItemGroup>
-    <CopyFileToFolders Include="images\test.ppm">
-      <FileType>Document</FileType>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="images\test_large.ppm">
-      <FileType>Document</FileType>
-    </CopyFileToFolders>
+    <None Include="images\test.ppm" />
+    <None Include="images\test_large.pgm" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

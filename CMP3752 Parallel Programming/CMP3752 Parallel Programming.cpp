@@ -20,7 +20,7 @@ int main(int argc, char** argv) {
 	//Part 1 - handle command line options such as device selection, verbosity, etc.
 	int platform_id = 0;
 	int device_id = 0;
-	string image_filename = "test_large.ppm";
+	string image_filename = "test_large.pgm";
 
 	for (int i = 1; i < argc; i++) {
 		if ((strcmp(argv[i], "-p") == 0) && (i < (argc - 1))) { platform_id = atoi(argv[++i]); }
@@ -131,7 +131,8 @@ int main(int argc, char** argv) {
 		queue.enqueueNDRangeKernel(NormaliseKernel, cl::NullRange, cl::NDRange(histogram_size), cl::NullRange);
 		queue.enqueueNDRangeKernel(BackProjectionKernel, cl::NullRange, cl::NDRange(image_input.size()), cl::NullRange);
 		std::cout << "hello" << endl;
-		//vector<unsigned char> output_buffer(image_input.size());
+
+		vector<unsigned char> output_buffer(image_input.size());
 		////4.3 Copy the result from device to host
 		queue.enqueueReadBuffer(dev_image_output, CL_TRUE, 0, image_input.size(), &output_buffer.data()[0]);
 		std::cout << "hello" << endl;

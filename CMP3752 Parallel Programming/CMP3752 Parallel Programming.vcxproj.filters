@@ -15,13 +15,15 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Tutorial 2.cpp">
+    <ClCompile Include="CMP3752 Parallel Programming.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CopyFileToFolders Include="kernels\kernels.cl" />
-    <CopyFileToFolders Include="images\test.ppm" />
-    <CopyFileToFolders Include="images\test_large.ppm" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="images\test.ppm" />
+    <None Include="images\test_large.pgm" />
   </ItemGroup>
 </Project>
