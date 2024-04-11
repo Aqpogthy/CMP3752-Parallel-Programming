@@ -148,7 +148,7 @@
     </CopyFileToFolders>
   </ItemGroup>
   <ItemGroup>
-    <None Include="images\test.ppm" />
+    <None Include="images\test.pgm" />
     <None Include="images\test_large.pgm" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

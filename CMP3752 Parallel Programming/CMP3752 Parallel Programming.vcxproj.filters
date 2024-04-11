@@ -23,7 +23,7 @@
     <CopyFileToFolders Include="kernels\kernels.cl" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="images\test.ppm" />
+    <None Include="images\test.pgm" />
     <None Include="images\test_large.pgm" />
   </ItemGroup>
 </Project>
