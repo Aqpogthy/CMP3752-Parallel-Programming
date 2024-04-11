@@ -1,5 +1,0 @@
-﻿  CMP3752 Parallel Programming.cpp
-C:\Users\Computing\Documents\GitHub\CMP3752-Parallel-Programming\CMP3752 Parallel Programming\CMP3752 Parallel Programming.cpp(74,25): warning C4244: 'argument': conversion from 'float' to 'const unsigned __int64', possible loss of data
-C:\Users\Computing\Documents\GitHub\CMP3752-Parallel-Programming\CMP3752 Parallel Programming\CMP3752 Parallel Programming.cpp(78,25): warning C4244: 'initializing': conversion from 'float' to 'size_t', possible loss of data
-C:\Users\Computing\Documents\GitHub\CMP3752-Parallel-Programming\CMP3752 Parallel Programming\CMP3752 Parallel Programming.cpp(111,72): warning C4244: 'argument': conversion from 'float' to 'cl::size_type', possible loss of data
-  CMP3752 Parallel Programming.vcxproj -> C:\Users\Computing\Documents\GitHub\CMP3752-Parallel-Programming\x64\Debug\CMP3752 Parallel Programming\CMP3752 Parallel Programming.exe

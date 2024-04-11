@@ -5,7 +5,7 @@
 #include "CImg.h"
 
 using namespace cimg_library;
-
+// The start of this and most of the framework is gathered from tutorial 2
 void print_help() {
 	std::cerr << "Application usage:" << std::endl;
 
@@ -17,7 +17,7 @@ void print_help() {
 }
 
 int main(int argc, char** argv) {
-	//Part 1 - handle command line options such as device selection, verbosity, etc.
+	//handle command line options such as device selection, verbosity, etc.
 	int platform_id = 0;
 	int device_id = 0;
 	string image_filename = "test_large.pgm";
@@ -69,8 +69,6 @@ int main(int argc, char** argv) {
 
 		float nr_bins = 256;
 
-		//int local_size = 8;
-
 		std::vector<mytype> B(nr_bins);
 
 		//device - buffers
@@ -89,8 +87,6 @@ int main(int argc, char** argv) {
 		
 		float SF = nr_bins / image_input.size(); //sets the scale factor which will be used to normalise and scale the cumulative histogram
 
-		cl::Buffer ScaleFactor(context, CL_MEM_READ_ONLY, sizeof(float));
-
 		
 		queue.enqueueWriteBuffer(dev_image_input, CL_TRUE, 0, image_input.size(), &image_input.data()[0]);//Copy images to device memory
 		queue.enqueueFillBuffer(Histogram, 0, 0, histogram_size);
@@ -99,9 +95,9 @@ int main(int argc, char** argv) {
 
 
 		//Setup and execute the kernel (i.e. device code)
-		cl::Kernel HistogramKernel = cl::Kernel(program, "intensityHistogram");
+		/*cl::Kernel HistogramKernel = cl::Kernel(program, "intensityHistogram");
 		HistogramKernel.setArg(0, dev_image_input);
-		HistogramKernel.setArg(1, Histogram);
+		HistogramKernel.setArg(1, Histogram);*/
 
 		cl::Kernel LocalHistogramKernel = cl::Kernel(program, "intensityHistogramLocal");
 		cl::Device device = context.getInfo<CL_CONTEXT_DEVICES>()[0]; // get device
@@ -165,6 +161,10 @@ int main(int argc, char** argv) {
 		std::cout << "NH = " << NH << std::endl;
 		std::cout << "Normalised Histogram kernel execution time [ns]: " << prof_event3.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event3.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
 		std::cout << GetFullProfilingInfo(prof_event3, ProfilingResolution::PROF_US) << endl;
+		cout << endl;
+
+		std::cout << "Back Projection kernel execution time [ns]: " << prof_event4.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event4.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
+		std::cout << GetFullProfilingInfo(prof_event4, ProfilingResolution::PROF_US) << endl;
 		cout << endl;
 
 		while (!disp_input.is_closed() && !disp_output.is_closed()

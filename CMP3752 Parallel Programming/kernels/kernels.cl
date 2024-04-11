@@ -1,4 +1,4 @@
-﻿kernel void intensityHistogram(global const uchar* A, global int* H) {
+﻿kernel void intensityHistogram(global const uchar* A, global int* H) { //from tutorial 3 
 
 	int id = get_global_id(0);
 	int bin_index = A[id];
@@ -7,7 +7,7 @@
 
 }
 
-kernel void intensityHistogramLocal(global const uchar* A, local int* LH, global int* H, const int nr_bins) {
+kernel void intensityHistogramLocal(global const uchar* A, local int* LH, global int* H, const int nr_bins) { //made during tutorial 3 and using lecture 7
 	int id = get_global_id(0);
 	int lid = get_local_id(0);
 	int bin_index = A[id];
